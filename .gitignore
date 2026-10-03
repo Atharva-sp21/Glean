@@ -1,0 +1,30 @@
+.DS_Store
+.build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.safetensors
+*.part
+
+# Local configuration, credentials and signing material
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.p8
+*.key
+*.mobileprovision
+*.provisionprofile
+Secrets.xcconfig
+Configuration/Local.xcconfig
+
+# Generated archives and local model caches
+*.ipa
+*.xcarchive/
+*.xcresult/
+*.dSYM/
+Models/
+.huggingface/
+__pycache__/
+*.pyc

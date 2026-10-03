@@ -1,0 +1,102 @@
+name: PrivateAction
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: targeted
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+    PRIVATE_ACTION_APP_GROUP: group.com.example.PrivateAction.privateaction
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+packages:
+  PrivateActionCore:
+    path: Core
+  MLXLM:
+    url: https://github.com/ml-explore/mlx-swift-lm
+    revision: 5064b8c5d8ed3b0bbb71385c4124f0fc102e74a2
+  MLX:
+    url: https://github.com/ml-explore/mlx-swift
+    exactVersion: 0.29.1
+  Transformers:
+    url: https://github.com/huggingface/swift-transformers
+    exactVersion: 1.1.6
+  Collections:
+    url: https://github.com/apple/swift-collections.git
+    exactVersion: 1.1.4
+  Jinja:
+    url: https://github.com/huggingface/swift-jinja.git
+    exactVersion: 2.5.1
+  Numerics:
+    url: https://github.com/apple/swift-numerics
+    exactVersion: 1.1.1
+targets:
+  PrivateAction:
+    type: application
+    platform: iOS
+    sources:
+      - App
+      - AI
+      - Actions
+      - Processing
+      - Views
+      - path: Resources
+        buildPhase: resources
+      - path: ThirdPartyNotices
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.PrivateAction
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_FILE: Configuration/App-Info.plist
+        CODE_SIGN_ENTITLEMENTS: Configuration/App.entitlements
+    dependencies:
+      - package: PrivateActionCore
+      - package: MLXLM
+        product: MLXLLM
+      - package: MLXLM
+        product: MLXLMCommon
+      - package: MLX
+        product: MLX
+      - target: PrivateActionShare
+        embed: true
+    scheme:
+      testTargets:
+        - PrivateActionTests
+  PrivateActionShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - ShareExtension
+      - App/SharedContainer.swift
+      - Processing/ContentProcessor.swift
+      - path: Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.PrivateAction.Share
+        INFOPLIST_FILE: Configuration/Share-Info.plist
+        CODE_SIGN_ENTITLEMENTS: Configuration/Share.entitlements
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+    dependencies:
+      - package: PrivateActionCore
+  PrivateActionTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Core/Tests/PrivateActionCoreTests
+      - Tests/iOS
+    dependencies:
+      - target: PrivateAction
+      - package: PrivateActionCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.PrivateAction.Tests
+        GENERATE_INFOPLIST_FILE: YES

@@ -1,0 +1,38 @@
+name: Bug report
+description: Report reproducible behavior using synthetic, non-private data.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "Do not include real screenshots, OCR text, names, booking details, tokens or other private content. Report security vulnerabilities through SECURITY.md."
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+      description: What did you expect, and what happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include a minimal synthetic example if needed.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Device, iOS and Xcode versions
+      placeholder: "iPhone 15 / iOS version / Xcode version"
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model and revision
+      description: Find the selected model under Settings → Developer.
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Redacted diagnostics
+      description: Error messages and technical measurements only; no user input or generated private content.

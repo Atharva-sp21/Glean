@@ -1,0 +1,40 @@
+name: iOS compile check
+
+# Explicitly dispatched: this is a larger build, not a physical-device test.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compile:
+    name: Compile unsigned app and extension
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+    steps:
+      - name: Check out source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Resolve committed dependency pins
+        run: >-
+          xcodebuild -resolvePackageDependencies
+          -project PrivateAction.xcodeproj
+          -scheme PrivateAction
+          -onlyUsePackageVersionsFromResolvedFile
+      - name: Build for a generic iOS device without signing
+        run: >-
+          xcodebuild build
+          -project PrivateAction.xcodeproj
+          -scheme PrivateAction
+          -configuration Debug
+          -destination 'generic/platform=iOS'
+          -disableAutomaticPackageResolution
+          CODE_SIGNING_ALLOWED=NO
