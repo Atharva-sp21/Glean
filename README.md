@@ -15,7 +15,7 @@
   <a href="docs/ROADMAP.md">Roadmap</a>
 </p>
 
-> **Prototype — device validation pending.** The Swift core and 48 deterministic security checks passed locally. The MLX adapter, downloader and action executors compiled against the available macOS SDK. The complete iOS app, real model inference and physical iPhone 15 acceptance have **not** been verified. [Full verification record →](BUILD_STATUS.md)
+> **Prototype — device validation pending.** The Swift core and 48 deterministic security checks passed locally; [core XCTest also passed in GitHub Actions](https://github.com/Atharva-sp21/private-action/actions/runs/37121429541). The MLX adapter, downloader and action executors compiled against the available macOS SDK. The complete iOS app, real model inference and physical iPhone 15 acceptance have **not** been verified. [Full verification record →](BUILD_STATUS.md)
 
 ## From a screenshot to something useful
 

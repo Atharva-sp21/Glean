@@ -14,7 +14,7 @@ Prepared on 2026-10-03 using Apple Swift 6.1.2 on an Apple Silicon Mac with Comm
 | MLX adapter compilation | Passed against macOS SDK | Real pinned MLX/MLXLMCommon/MLXLLM APIs; iOS available-memory branch excluded on macOS |
 | Model downloader compilation | Passed against macOS SDK | Real URLSession delegate and Swift 6 concurrency checks; no model download attempted |
 | EventKit/local-save executor compilation | Passed against macOS SDK | Real EventKit APIs; no permissions requested and no actual calendar/reminder mutations |
-| XCTest execution | **Unavailable** | Command Line Tools do not provide the XCTest module on this host |
+| Core XCTest execution | **Passed in GitHub Actions** | Original local host lacked XCTest; the linked CI run below used full Xcode |
 | Full iOS app / extension compilation | **Not run** | Requires full Xcode and iOS SDK |
 | Simulator UI / extension tests | **Not run** | Requires Xcode and installed simulator runtime |
 | Default-model inference smoke test | **Not run** | Requires iPhone, model installation and working Metal runtime |
@@ -25,6 +25,10 @@ Prepared on 2026-10-03 using Apple Swift 6.1.2 on an Apple Silicon Mac with Comm
 The adapter compilation check built the actual source files for QwenModelRunner, ModelDownloadService and Executors against the resolved dependencies in a temporary macOS package. ResourceLimiter explicitly refuses macOS inference; this check does not weaken the iOS memory check or establish that the complete iOS target builds.
 
 The pinned MLX token-callback generation API emits a deprecation warning. It is intentionally used here to enforce stop conditions synchronously at token boundaries and measure exact output-token counts. Migrate it with cancellation/termination tests when upgrading MLX.
+
+## GitHub Actions verification
+
+The [first Core checks run](https://github.com/Atharva-sp21/private-action/actions/runs/37121429541) passed on commit `6a9cd32`: repository/architecture checks, core build, all 48 deterministic security scenarios, and the core XCTest suite. This provides real XCTest execution on the GitHub-hosted macOS/Xcode runner. It does not validate the complete iOS target or physical-device inference.
 
 ## Remaining release gates
 
