@@ -17,7 +17,7 @@ Updated 4 October 2026. This distinguishes compilation, deterministic tests and 
 | Performance, battery, thermal, offline/network acceptance | No controlled results published |
 | Simulator UI, accessibility and release archive | No complete acceptance record published |
 
-The [initial core CI run](https://github.com/Atharva-sp21/private-action/actions/runs/37121429541) passed for the original implementation. That historical run does not establish the current device feature status.
+The [initial core CI run](https://github.com/Atharva-sp21/Glean/actions/runs/37121429541) passed for the original implementation. That historical run does not establish the current device feature status.
 
 ## Before a release
 

@@ -77,8 +77,8 @@ It does not silently read WhatsApp, float over other apps, automatically send me
 ## For builders
 
 ```sh
-git clone https://github.com/Atharva-sp21/private-action.git
-cd private-action
+git clone https://github.com/Atharva-sp21/Glean.git
+cd Glean
 open PrivateAction.xcodeproj
 ```
 
