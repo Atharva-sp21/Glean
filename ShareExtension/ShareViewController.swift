@@ -11,7 +11,7 @@ final class ShareViewController: UIViewController {
         view.backgroundColor = .systemBackground
         let symbol = UIImageView(image: UIImage(systemName: "tray.and.arrow.down.fill")); symbol.tintColor = .systemTeal
         symbol.contentMode = .scaleAspectFit
-        let title = UILabel(); title.text = "Private Action"; title.font = .preferredFont(forTextStyle: .title1)
+        let title = UILabel(); title.text = "Glean"; title.font = .preferredFont(forTextStyle: .title1)
         message.text = "Saving securely on your iPhone…"; message.numberOfLines = 0; message.textAlignment = .center
         let done = UIButton(type: .system); done.setTitle("Done", for: .normal)
         done.addTarget(self, action: #selector(finish), for: .touchUpInside)
@@ -29,7 +29,7 @@ final class ShareViewController: UIViewController {
                 let (data, kind) = try await SharedInboxWriter.load(provider, suppliedTitle: extensionItems.first?.attributedTitle?.string, suppliedText: extensionItems.first?.attributedContentText?.string)
                 try Task.checkCancellation()
                 _ = try await store.importData(data, kind: kind)
-                message.text = "Ready for analysis.\n\nTap Done, then open Private Action from your Home Screen. Your content stays on this iPhone."
+                message.text = "Ready for analysis.\n\nTap Done, then open Glean from your Home Screen. Your content stays on this iPhone."
             } catch { message.text = "Couldn’t save this item. Share one image, PDF, website address or text selection (up to 20 MB)." }
         }
     }

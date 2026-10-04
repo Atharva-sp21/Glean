@@ -7,7 +7,7 @@ import PrivateActionCore
     @Environment(\.scenePhase) private var scenePhase
     var body: some Scene {
         WindowGroup {
-            RootView().environment(environment).tint(.teal)
+            RootView().environment(environment).tint(AppStyle.mint).preferredColorScheme(.dark)
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .active { Task { await environment.refresh() } }
                     else if phase == .background { environment.resourcePressure() }

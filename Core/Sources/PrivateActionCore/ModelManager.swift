@@ -13,6 +13,7 @@ public struct InferenceMetrics: Codable, Sendable, Identifiable {
     public var peakMLXBytes: Int?
     public var thermalBefore: String
     public var thermalAfter: String
+    public var failureCode: String?
     public var success: Bool
     public var tokensPerSecond: Double? {
         guard let outputTokens, generationSeconds > 0 else { return nil }; return Double(outputTokens) / generationSeconds
@@ -30,7 +31,13 @@ public struct GenerationOutput: Sendable {
 public protocol LocalLanguageModel: Sendable {
     func load() async throws
     func generate(_ input: AnalysisInput) async throws -> GenerationOutput
+    func generate(_ input: AnalysisInput, attempt: Int) async throws -> GenerationOutput
     func unload() async
+}
+public extension LocalLanguageModel {
+    func generate(_ input: AnalysisInput, attempt: Int) async throws -> GenerationOutput {
+        try await generate(input)
+    }
 }
 public struct AnalysisResult: Sendable {
     public let proposal: ValidatedProposal
@@ -52,16 +59,17 @@ public actor ModelManager {
             let loadTime = Date().timeIntervalSince(start)
             // One bounded retry. Invalid model text is never fed back into the prompt.
             for attempt in 0..<2 {
-                var output = try await runner.generate(input)
+                var output = try await runner.generate(input, attempt: attempt)
                 try Task.checkCancellation()
                 do {
-                    let proposal = try OutputValidator.decode(output.json)
+                    let proposal = try OutputValidator.decode(ModelOutputEnvelope.normalize(output.json))
                     output.metrics.loadSeconds = attempt == 0 ? loadTime : 0; output.metrics.success = true
                     await onMetrics(output.metrics)
                     return AnalysisResult(proposal: proposal, metrics: output.metrics)
                 } catch {
                     output.metrics.loadSeconds = attempt == 0 ? loadTime : 0
                     output.metrics.success = false
+                    output.metrics.failureCode = OutputDiagnostics.classify(output.json, outputTokens: output.metrics.outputTokens)
                     await onMetrics(output.metrics)
                     if attempt == 1 { throw error }
                 }

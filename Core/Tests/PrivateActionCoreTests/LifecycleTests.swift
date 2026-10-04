@@ -69,3 +69,28 @@ final class LifecycleTests: XCTestCase {
         }
     }
 }
+
+private actor CompactRetryRunner: LocalLanguageModel {
+    var attempts: [Int] = []
+    func load() async throws {}
+    func unload() async {}
+    func generate(_ input: AnalysisInput) async throws -> GenerationOutput {
+        XCTFail("Manager must pass retry context")
+        return GenerationOutput(json: Data(), metrics: InferenceMetrics())
+    }
+    func generate(_ input: AnalysisInput, attempt: Int) async throws -> GenerationOutput {
+        attempts.append(attempt)
+        let text = attempt == 0 ? "{\"category\":\"generic\"" : #"{"category":"generic","title":"Resume","summary":"Software engineering experience and education.","dates":[],"locations":[],"people":[],"checklist":[],"proposedActions":[{"type":"saveInformation","title":"Save overview","explanation":"Keep for reference."}]}"#
+        return GenerationOutput(json: Data(text.utf8), metrics: InferenceMetrics())
+    }
+}
+final class CompactRetryTests: XCTestCase {
+    func testTruncatedResponseRetriesWithContextAndValidates() async throws {
+        let runner = CompactRetryRunner()
+        let result = try await ModelManager(runner: runner).analyze(AnalysisInput(text: "Resume: software engineering experience and education."))
+        let attempts = await runner.attempts
+        XCTAssertEqual(attempts, [0, 1])
+        XCTAssertEqual(result.proposal.value.proposedActions.map(\.type), [.saveInformation])
+        XCTAssertTrue(result.metrics.success)
+    }
+}

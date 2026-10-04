@@ -1,6 +1,6 @@
 # Getting started
 
-Build and install Private Action on a physical iPhone. This is a source prototype; see the [verification status](../BUILD_STATUS.md) before testing.
+Build and install Glean on a physical iPhone. This is a source prototype; see the [verification status](../BUILD_STATUS.md) before testing.
 
 ## Open and run
 
@@ -10,7 +10,7 @@ Build and install Private Action on a physical iPhone. This is a source prototyp
 4. Resolve packages using the committed `Package.resolved`. If a newer Xcode offers dependency upgrades, keep the pins until you explicitly review them.
 5. Select your physical **standard iPhone 15**. Build and run. The deployment floor is iOS 17; device support depends on your installed Xcode. Simulator use is for UI/intake tests, not MLX performance claims.
 6. Open Settings → Download Local AI Model. The default download is **984,013,244 bytes** across all pinned model/tokenizer files (about 984 MB decimal). No weights are bundled in this source deliverable.
-7. Add text from the inbox, or share one screenshot/image, PDF, text selection or website address from another app. In the Share Extension, tap Done and open Private Action from the Home Screen. Open the inbox item and tap Analyze Locally.
+7. Add text from the inbox, or share one screenshot/image, PDF, text selection or website address from another app. In the Share Extension, tap Done and open Glean from the Home Screen. Open the inbox item and tap Analyze Locally.
 8. Review a suggested action. For Calendar/Reminders, explicitly grant access, choose a writable destination, review/edit fields, confirm the date if present, then tap Add.
 
 The Share Extension intentionally uses the supported manual handoff. It does not use responder-chain tricks, private selectors or an unsupported automatic app launch. Safari webpages are not fetched. URL metadata support is limited to the address, supplied title and any text provided by the host in v1; no Safari page-text preprocessing JavaScript is installed.

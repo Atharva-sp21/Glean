@@ -36,7 +36,7 @@ Please bring:
 - Portfolio
 ```
 
-Share → Private Action → Done → open app → open item → Analyze Locally. Verify interview summary, visible date text, Photo ID and Portfolio checklist, relevant Calendar/Reminder suggestions. Because no year/timezone is present, ISO date should remain null. Confirm the intended year/time yourself in the event preview. Explicitly choose the destination and press Add. Check exactly one event exists. Repeat the same action button; the journal should prevent another write.
+Share → Glean → Done → open app → open item → Analyze Locally. Verify interview summary, visible date text, Photo ID and Portfolio checklist, relevant Calendar/Reminder suggestions. Because no year/timezone is present, ISO date should remain null. Confirm the intended year/time yourself in the event preview. Explicitly choose the destination and press Add. Check exactly one event exists. Repeat the same action button; the journal should prevent another write.
 
 Turn on Airplane Mode (also explicitly disable Wi-Fi), force-quit/relaunch the app and repeat from sharing through action preview. Use Instruments/network inspection with radios enabled in a separate run to ensure inference emits **zero network requests**. Do not infer zero traffic solely from an Airplane Mode success.
 

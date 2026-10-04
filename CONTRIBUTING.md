@@ -1,6 +1,6 @@
 # Contributing
 
-Private Action is a private iOS prototype. Start with [setup](docs/GETTING_STARTED.md), [architecture](ARCHITECTURE.md) and the [security model](SECURITY.md).
+Glean is a private iOS prototype. Start with [setup](docs/GETTING_STARTED.md), [architecture](ARCHITECTURE.md) and the [security model](SECURITY.md).
 
 ## Development workflow
 

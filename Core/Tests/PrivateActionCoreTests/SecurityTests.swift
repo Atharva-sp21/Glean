@@ -33,3 +33,33 @@ final class SecurityTests: XCTestCase {
         try ModelAssetVerifier.verify(url, asset: ModelAsset(path: "model", size: 4, sha256: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"))
     }
 }
+
+final class OutputDiagnosticsTests: XCTestCase {
+    func testFailureCategoriesContainNoContent() {
+        XCTAssertEqual(OutputDiagnostics.classify(Data("```json\nprivate text".utf8), outputTokens: 20), "markdown_wrapper")
+        XCTAssertEqual(OutputDiagnostics.classify(Data("<think>private text".utf8), outputTokens: 20), "thinking_markup")
+        XCTAssertEqual(OutputDiagnostics.classify(Data("{\"private\":".utf8), outputTokens: 512), "token_limit_invalid_json")
+        XCTAssertEqual(OutputDiagnostics.classify(Data("{\"private\":1}".utf8), outputTokens: 20), "top_level_keys missing=[category,checklist,dates,locations,people,proposedActions,summary,title] extra_count=1")
+        XCTAssertEqual(OutputDiagnostics.classify(Data("[]".utf8), outputTokens: 20), "not_json_object")
+    }
+}
+
+final class ModelOutputEnvelopeTests: XCTestCase {
+    func testOmittedListsBecomeEmptyWithoutInventingActions() throws {
+        let data = Data(#"{"category":"generic","title":"Note","summary":"Read the document."}"#.utf8)
+        let result = try OutputValidator.decode(ModelOutputEnvelope.normalize(data))
+        XCTAssertTrue(result.value.proposedActions.isEmpty)
+        XCTAssertTrue(result.value.dates.isEmpty)
+        XCTAssertThrowsError(try OutputValidator.decode(data))
+    }
+    func testUnknownFieldsAndMissingFactsRemainRejected() {
+        for text in [
+            #"{"category":"generic","title":"Note","summary":"Text","execute":"send"}"#,
+            #"{"category":"generic","title":"Note"}"#,
+            #"{"category":"generic","title":"Note","summary":"Text","dates":null}"#,
+            #"{"category":"generic","title":"Note","summary":"Text","proposedActions":[{"type":"send","title":"Send","explanation":"Now"}]}"#
+        ] {
+            XCTAssertThrowsError(try OutputValidator.decode(ModelOutputEnvelope.normalize(Data(text.utf8))))
+        }
+    }
+}

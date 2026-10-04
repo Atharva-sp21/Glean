@@ -8,8 +8,8 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section {
-                Label("Private by design", systemImage: "lock.shield.fill").font(.headline).foregroundStyle(.teal)
-                Text("Private Action analyzes content on your iPhone. Download a local model once, then analyze without an internet connection.")
+                Label("Private by design", systemImage: "lock.shield.fill").font(.headline).foregroundStyle(AppStyle.mint)
+                Text("Glean analyzes content on your iPhone. Download a local model once, then analyze without an internet connection.")
             }
             Section("Local AI model") {
                 if let model = app.selected {
@@ -26,7 +26,7 @@ struct SettingsView: View {
                 } else if !app.installed {
                     Button("Download Local AI Model", systemImage: "arrow.down.circle.fill") { app.downloadModel() }.disabled(app.isBusy)
                 } else {
-                    Label("Local AI ready", systemImage: "checkmark.circle.fill").foregroundStyle(.teal)
+                    Label("Local AI ready", systemImage: "checkmark.circle.fill").foregroundStyle(AppStyle.mint)
                     Text("Model integrity is verified before every load.").font(.caption).foregroundStyle(.secondary)
                 }
             }
@@ -42,7 +42,7 @@ struct SettingsView: View {
                 Button("Delete Selected Model", role: .destructive) { confirmModel = true }.disabled(app.isBusy)
             }
             Section { NavigationLink("Developer") { DeveloperView() } }
-        }.navigationTitle("Settings")
+        }.scrollContentBackground(.hidden).background(AppBackdrop()).navigationTitle("Settings")
             .confirmationDialog("Delete all inbox items, saved content and local benchmark records?", isPresented: $confirmData, titleVisibility: .visible) {
                 Button("Delete Local Data", role: .destructive) { Task { await app.deleteAllData() } }
             } message: { Text("Downloaded models and events or reminders already added to iOS are kept.") }
@@ -114,7 +114,10 @@ struct BenchmarkView: View {
                             if let first = metric.firstTokenSeconds { Text("First token \(first, specifier: "%.2f")s") }
                             if let speed = metric.tokensPerSecond { Text("\(speed, specifier: "%.1f") output tokens/s (including prefill)") }
                             if let memory = metric.peakMLXBytes { Text("MLX peak \(ByteCountFormatter.string(fromByteCount: Int64(memory), countStyle: .memory))") }
-                        } else { Text("Detailed timing unavailable for this failed run.") }
+                        } else {
+                            if let code = metric.failureCode { Text("Diagnostic: \(code)").textSelection(.enabled) }
+                            Text("Input \(metric.inputTokens ?? 0) · output \(metric.outputTokens ?? 0) tokens")
+                        }
                         Text("Thermal: \(metric.thermalBefore) → \(metric.thermalAfter)")
                     }.font(.caption)
                 }

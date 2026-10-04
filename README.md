@@ -1,5 +1,9 @@
+<p align="center"><img src="docs/assets/glean-logo.png" alt="Glean logo" width="160" /></p>
+
+# Glean
+
 <p align="center">
-  <img src="docs/assets/banner.svg" alt="Private Action — Share anything. Understand privately. Act deliberately." width="100%" />
+  <img src="docs/assets/banner.svg" alt="Glean — Share anything. Understand privately. Act deliberately." width="100%" />
 </p>
 
 <p align="center">
@@ -19,7 +23,7 @@
 
 ## From a screenshot to something useful
 
-An interview invitation arrives as a screenshot. Share it to Private Action, analyze it locally, and review a summary, a checklist and suggested actions. Confirm the date and destination before adding an event or reminder.
+An interview invitation arrives as a screenshot. Share it to Glean, analyze it locally, and review a summary, a checklist and suggested actions. Confirm the date and destination before adding an event or reminder.
 
 **Share → Understand → Review → Act**
 
@@ -53,7 +57,7 @@ You need full Xcode with support for your device, an Apple signing team with the
 4. In the app, open **Settings → Download Local AI Model**.
 5. Try **Inbox → + → Add Text**, then **Analyze Locally**.
 
-For shared files: **Share → Private Action → Done**, then open the app manually. The extension never runs the model or bypasses iOS launch restrictions.
+For shared files: **Share → Glean → Done**, then open the app manually. The extension never runs the model or bypasses iOS launch restrictions.
 
 [Detailed setup, signing and first-run instructions →](docs/GETTING_STARTED.md)
 

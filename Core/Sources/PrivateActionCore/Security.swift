@@ -126,3 +126,46 @@ public enum ModelAssetVerifier {
         }
     }
 }
+
+// Codes only: never retain model output, document contents or decoder error descriptions.
+public enum OutputDiagnostics {
+    public static func classify(_ data: Data, outputTokens: Int?) -> String {
+        guard data.count <= SecurityPolicy.maxOutputBytes else { return "output_too_large" }
+        let text = String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        if text.isEmpty { return "empty_output" }
+        if text.hasPrefix("<think>") || text.hasPrefix("</think>") { return "thinking_markup" }
+        if text.hasPrefix("```") { return "markdown_wrapper" }
+        guard let object = try? JSONSerialization.jsonObject(with: data) else {
+            return (outputTokens ?? 0) >= SecurityPolicy.maxOutputTokens ? "token_limit_invalid_json" : "invalid_json"
+        }
+        guard let root = object as? [String: Any] else { return "not_json_object" }
+        let required: Set<String> = ["category", "title", "summary", "dates", "locations", "people", "checklist", "proposedActions"]
+        if Set(root.keys) != required {
+            let missing = required.subtracting(root.keys).sorted().joined(separator: ",")
+            let extras = Set(root.keys).subtracting(required).count
+            // Only schema-owned names and a count, never arbitrary model-generated keys.
+            return "top_level_keys missing=[\(missing)] extra_count=\(extras)"
+        }
+        guard (try? JSONDecoder().decode(ActionProposal.self, from: data)) != nil else { return "field_type_or_enum" }
+        return "field_constraint"
+    }
+}
+
+/// Transport normalization only. No inferred facts or synthesized actions.
+/// Strict OutputValidator still checks the entire resulting proposal.
+public enum ModelOutputEnvelope {
+    public static func normalize(_ data: Data) throws -> Data {
+        guard data.count <= SecurityPolicy.maxOutputBytes else { throw PrivateActionError.tooLarge }
+        guard var root = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+            throw PrivateActionError.invalidOutput
+        }
+        let lists = ["dates", "locations", "people", "checklist", "proposedActions"]
+        let allowed = Set(lists + ["category", "title", "summary"])
+        guard Set(root.keys).isSubset(of: allowed),
+              root["category"] != nil, root["title"] != nil, root["summary"] != nil else {
+            throw PrivateActionError.invalidOutput
+        }
+        for key in lists where root[key] == nil { root[key] = [Any]() }
+        return try JSONSerialization.data(withJSONObject: root)
+    }
+}

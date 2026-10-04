@@ -22,12 +22,15 @@ actor QwenModelRunner: LocalLanguageModel {
         try Task.checkCancellation()
     }
     func generate(_ input: AnalysisInput) async throws -> GenerationOutput {
+        try await generate(input, attempt: 0)
+    }
+    func generate(_ input: AnalysisInput, attempt: Int) async throws -> GenerationOutput {
         guard let container else { throw PrivateActionError.missingModel }
         try ResourceLimiter.check()
         let manifest = self.manifest
         return try await container.perform { context in
             let prompt = UserInput(messages: [
-                ["role": "system", "content": PromptBuilder.system],
+                ["role": "system", "content": PromptBuilder.system(attempt: attempt)],
                 ["role": "user", "content": PromptBuilder.user(input)]
             ], additionalContext: ["enable_thinking": false])
             let prepared = try await context.processor.prepare(input: prompt)

@@ -15,7 +15,7 @@ struct AnalysisView: View {
                     List {
                         Section {
                             VStack(alignment: .leading, spacing: 10) {
-                                Label(raw.category.rawValue.capitalized, systemImage: "sparkle").font(.caption.weight(.semibold)).foregroundStyle(.teal)
+                                Label(raw.category.rawValue.capitalized, systemImage: "sparkle").font(.caption.weight(.semibold)).foregroundStyle(AppStyle.mint)
                                 Text(raw.title).font(.title2.bold())
                                 ForEach(Array(raw.dates.enumerated()), id: \.offset) { _, date in
                                     Label(date.rawText, systemImage: "calendar")
@@ -50,19 +50,19 @@ struct AnalysisView: View {
                     }.sheet(item: $selectedAction) { action in ActionReviewView(itemID: id, proposal: proposal, action: action) }
                 } else {
                     VStack(spacing: 22) {
-                        Image(systemName: item.status == .processing ? "sparkles" : "doc.text.magnifyingglass").font(.system(size: 48)).foregroundStyle(.teal)
+                        EmeraldOrb().frame(height: 180)
                         Text(item.status == .processing ? "Understanding on your iPhone" : "Ready to understand").font(.title2.bold())
                         Text(item.failure ?? "Extract useful information privately, then choose what to do with it.").multilineTextAlignment(.center).foregroundStyle(.secondary)
                         if item.status == .processing {
                             ProgressView(); Button("Cancel Analysis", role: .cancel) { app.cancelAnalysis() }
                         } else {
-                            Button("Analyze Locally", systemImage: "sparkles") { app.analyze(item) }.buttonStyle(.borderedProminent).disabled(app.isBusy || !app.installed)
+                            Button("Analyze Locally", systemImage: "sparkles") { app.analyze(item) }.buttonStyle(EmeraldButtonStyle()).disabled(app.isBusy || !app.installed)
                             if !app.installed { Text("Install the local AI model in Settings first.").font(.footnote) }
                         }
                     }.padding(28).frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             } else { ContentUnavailableView("Item removed", systemImage: "tray") }
-        }.navigationTitle("Analysis").navigationBarTitleDisplayMode(.inline)
+        }.background(AppBackdrop()).navigationTitle("Analysis").navigationBarTitleDisplayMode(.inline)
     }
 }
 
