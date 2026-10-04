@@ -79,3 +79,18 @@ public actor ActionJournal {
         try await journal.complete(approved)
     }
 }
+
+/// Deterministic review options. These never execute an action or infer dates.
+public enum ReviewOptions {
+    public static func forProposal(_ proposal: ValidatedProposal) throws -> ValidatedProposal {
+        let value = proposal.value
+        var actions = value.proposedActions
+        if value.category == .event && !actions.contains(where: { $0.type == .createCalendarEvent }) {
+            actions.insert(ProposedAction(type: .createCalendarEvent, title: value.title,
+                explanation: "Review the date, time and calendar before adding this event."), at: 0)
+        }
+        return try OutputValidator.validate(ActionProposal(category: value.category, title: value.title,
+            summary: value.summary, dates: value.dates, locations: value.locations, people: value.people,
+            checklist: value.checklist, proposedActions: actions))
+    }
+}

@@ -30,6 +30,15 @@ struct SettingsView: View {
                     Text("Model integrity is verified before every load.").font(.caption).foregroundStyle(.secondary)
                 }
             }
+            Section("Share to Glean") {
+                NavigationLink("How sharing works") { ShareGuideView() }
+                Text("Share from another app, then open Glean for automatic analysis and action review.")
+            }
+            Section("Optional: Back Tap shortcut") {
+                Text("In Shortcuts, create Glean Screenshot with Take Screenshot followed by Analyze Screenshot in Glean. Pass the screenshot into the Glean action.")
+                Text("Then choose it in iPhone Settings → Accessibility → Touch → Back Tap.")
+                Text("Glean opens and analyzes automatically. Keep it visible while processing, then review any calendar or reminder action before saving.").font(.footnote).foregroundStyle(.secondary)
+            }
             Section("Privacy") {
                 LabeledContent("Inference", value: "On device")
                 LabeledContent("Cloud AI", value: "Disabled")

@@ -1,135 +1,107 @@
-<p align="center"><img src="docs/assets/glean-logo.png" alt="Glean logo" width="160" /></p>
-
-# Glean
-
 <p align="center">
-  <img src="docs/assets/banner.svg" alt="Glean — Share anything. Understand privately. Act deliberately." width="100%" />
+  <img src="docs/assets/glean-logo.png" alt="Glean — emerald light on midnight blue" width="220" />
+</p>
+<h1 align="center">Glean</h1>
+<p align="center"><strong>A little context. A clear next step.</strong><br />Turn shared messages, screenshots and documents into useful actions—on your iPhone.</p>
+<p align="center">
+  <a href="docs/GETTING_STARTED.md">Install on iPhone</a> ·
+  <a href="docs/USING_GLEAN.md">Use Glean</a> ·
+  <a href="docs/SCREENSHOT_SHORTCUT.md">Set up Back Tap</a> ·
+  <a href="docs/TROUBLESHOOTING.md">Get unstuck</a>
 </p>
 
-<p align="center">
-  <strong>A private, on-device action inbox for your iPhone.</strong><br />
-  SwiftUI · Vision · PDFKit · MLX Swift · Qwen3 · EventKit
-</p>
+---
 
-<p align="center">
-  <a href="docs/GETTING_STARTED.md">Get started</a> ·
-  <a href="ARCHITECTURE.md">Architecture</a> ·
-  <a href="SECURITY.md">Security</a> ·
-  <a href="BENCHMARKING.md">Device testing</a> ·
-  <a href="docs/ROADMAP.md">Roadmap</a>
-</p>
+## Less collecting. More doing.
 
-> **Prototype — device validation pending.** The Swift core and 48 deterministic security checks passed locally; [core XCTest also passed in GitHub Actions](https://github.com/Atharva-sp21/private-action/actions/runs/37121429541). The MLX adapter, downloader and action executors compiled against the available macOS SDK. The complete iOS app, real model inference and physical iPhone 15 acceptance have **not** been verified. [Full verification record →](BUILD_STATUS.md)
+A meeting buried in a message. A task in a screenshot. A PDF worth remembering.
 
-## From a screenshot to something useful
+**Share → Understand → Review → Act.** Glean extracts context locally and helps you turn it into a calendar event, reminder, checklist or saved note. You decide what gets saved.
 
-An interview invitation arrives as a screenshot. Share it to Glean, analyze it locally, and review a summary, a checklist and suggested actions. Confirm the date and destination before adding an event or reminder.
+| Give Glean | Get a starting point |
+|---|---|
+| A meeting invitation | An editable calendar event with date/time review |
+| A task or deadline | A suggested reminder, when produced by the model |
+| A screenshot or photo | Text extracted with Apple Vision, then analyzed locally |
+| A PDF | A summary and relevant actions |
+| A text selection | Structured information without writing a prompt |
+| A shared website link | Analysis of supplied metadata; the webpage is not fetched |
 
-**Share → Understand → Review → Act**
+> **Working prototype, still being tested.** The app builds for iOS and has run on a physical iPhone. Real-device analysis has produced both successful results and schema failures. Calendar writes, Back Tap handoff, background handling and extraction quality still need full device acceptance testing. See the honest [verification record](BUILD_STATUS.md).
 
-No prompts to write. No chatbot interface. No cloud AI calls.
+## Three ways in
 
-| Bring in | Understand locally | Choose what happens |
-|---|---|---|
-| Screenshots and images | Vision OCR | Add a calendar event |
-| PDFs | Native text extraction or page OCR | Create a reminder |
-| Selected text | Bounded, normalized text | Save a checklist or information |
-| Website addresses | Supplied metadata; no webpage fetch | Edit, copy or share a reply draft |
+### 1. Share to Glean · the everyday route
 
-## Built for deliberate actions
+In another app, choose **Share → Glean**. Wait for **Saved to Glean**, tap **Done**, then open Glean. The newest shared item opens and begins analysis when Glean is ready. Review the result before taking an action.
 
-- **Private processing.** After model installation, the analysis path uses local files, OCR and inference. No analytics or private content in logs.
-- **Your own local model.** Qwen3 1.7B 4-bit is the default: a pinned download of approximately 984 MB. Apple Intelligence is not required.
-- **Typed suggestions.** Model output is untrusted JSON, decoded into a strict schema and validated before any action UI appears.
-- **Explicit approval.** Review editable fields, choose a destination and confirm. The model cannot send messages, delete events, run code or upload files.
-- **Protected storage.** App Group intake, iOS file protection, metadata stripping for images, source expiry and deletion controls.
-- **Measured limits.** Bounded files, PDF pages, tokens and generation attempts; cancellation, thermal checks and memory admission checks.
+Source apps offer different sharing options. If WhatsApp only offers Copy for your message, paste the text into Glean instead.
 
-Calendar and Reminders may sync approved content through the account you select. Explicitly sharing a draft also hands that text to your chosen app. These boundaries are shown in the review flow.
+### 2. Paste or import · always available
 
-## Run on your iPhone
+Open Glean and choose **Paste or type text**, or **Import a photo or PDF**. Open the resulting inbox item and tap **Analyze Locally**.
 
-You need full Xcode with support for your device, an Apple signing team with the required App Group capability, and a physical iPhone. The deployment floor is iOS 17; the primary test target is the standard iPhone 15.
+### 3. Back Tap · optional convenience
 
-1. Clone this repository and open `PrivateAction.xcodeproj`.
-2. Configure signing and the **same App Group** for the app and Share Extension.
-3. Select your iPhone and run the `PrivateAction` scheme.
-4. In the app, open **Settings → Download Local AI Model**.
-5. Try **Inbox → + → Add Text**, then **Analyze Locally**.
+Use an Apple Shortcut to connect **Take Screenshot → Analyze Screenshot in Glean**, then assign it to Back Tap. Glean opens and starts analysis automatically. No manual photo upload is needed. [Step-by-step setup →](docs/SCREENSHOT_SHORTCUT.md)
 
-For shared files: **Share → Glean → Done**, then open the app manually. The extension never runs the model or bypasses iOS launch restrictions.
+## Put Glean on your iPhone
 
-[Detailed setup, signing and first-run instructions →](docs/GETTING_STARTED.md)
+You need a Mac with full Xcode, an Apple Account, a compatible physical iPhone and a data-capable cable. The project targets iOS 17 or later; actual model performance depends on the device. Standard iPhone 15 is the intended baseline.
 
-## The security boundary
+1. Clone this private repository using an authorized GitHub account.
+2. Open **PrivateAction.xcodeproj** in Xcode and let packages resolve.
+3. Select your signing team and configure the same App Group for the app and extension.
+4. Connect and trust your iPhone; enable Developer Mode when prompted.
+5. Select **PrivateAction → your iPhone** in the top toolbar and press **⌘R**.
+6. Inside Glean, open **Settings → Download Local AI Model**.
 
-```mermaid
-flowchart LR
-    A[Untrusted content] --> B[Bounded OCR / parsing]
-    B --> C[Local model]
-    C --> D[Untrusted JSON]
-    D --> E[Typed validation]
-    E --> F[User review]
-    F --> G[Approved action]
-    G --> H[Allowlisted executor]
-```
+**New to Xcode?** Follow the [complete iPhone setup guide](docs/GETTING_STARTED.md). It explains project versus target versus scheme, signing, device trust, model installation and your first test.
 
-**Model intelligence is never authorization.** The prompt is one defensive layer; the validator, action allowlist and confirmation flow enforce the boundary outside the model.
+The product is **Glean**. Internal names such as `PrivateAction.xcodeproj`, `PrivateActionCore` and the `PrivateAction` scheme remain unchanged so existing installations and development workflows continue to work.
 
-The pinned MLX LM release uses a schema prompt, strict validation and one bounded retry. Token-level grammar constraints are **not implemented** in this version. [Security model and limitations →](SECURITY.md)
+## Local intelligence. Explicit actions.
 
-## Repository map
+- **On-device processing:** SwiftUI, Vision OCR, PDFKit and MLX Swift. No cloud AI endpoint or analytics.
+- **One model download:** Qwen3 1.7B 4-bit, approximately 984 MB; pinned revisions and SHA-256 verification. Apple Intelligence is not required.
+- **Review before writing:** Calendar and Reminders require permission, a destination and explicit confirmation. Event results offer a calendar review option even if the model omits that suggestion.
+- **Untrusted output:** schema validation, bounded retries and action allowlists. Missing list fields may normalize to empty arrays; unknown fields remain rejected.
+- **Protected intake:** images are re-encoded, originals are removed after successful analysis, and stale source cleanup runs at startup. Saved results remain until deleted.
 
-```text
-App/                     App lifecycle and dependency composition
-Views/                   Inbox, analysis, review, saved and settings UI
-ShareExtension/          Lightweight Share Sheet intake
-Processing/              Vision OCR, PDF parsing and text preparation
-AI/                      MLX runner, downloader and synthetic benchmarks
-Actions/                 Calendar, Reminder and local-save executors
-Core/                    Testable models, validation, storage and authorization
-Configuration/           App Groups, Info.plists and entitlements
-Resources/               Model integrity catalog, icon and privacy manifest
-Tests/iOS/               App-hosted processing tests
-Scripts/                 Architecture and repository checks
-.github/                 CI, issue forms and pull request template
-docs/                    Setup, roadmap and repository artwork
-ThirdPartyNotices/       Dependency and model notices
-```
+Calendar/Reminder accounts may sync the content you approve. Explicitly sharing a reply draft passes it to the chosen app. Read the [security model](SECURITY.md) for boundaries and limitations.
 
-`project.yml` is the XcodeGen source; the generated Xcode project and exact dependency lockfile are committed. Model weights, credentials, user content and build products are excluded.
+## What Glean does not do yet
 
-## Validate changes
+It does not silently read WhatsApp, float over other apps, automatically send messages, fetch webpages, or import an entire recurring timetable. It creates individual reviewed calendar events; it does not reconcile existing schedules. Background GPU execution is not supported—keep Glean visible and your iPhone unlocked while analyzing. Model output can still fail validation.
+
+## For builders
 
 ```sh
-swift build --package-path Core
+git clone https://github.com/Atharva-sp21/private-action.git
+cd private-action
+open PrivateAction.xcodeproj
+```
+
+The generated project is included; XcodeGen is optional. `project.yml` is its source. Regenerating may reset local signing choices, so preserve them before running XcodeGen.
+
+```sh
+swift test --package-path Core
 swift run --package-path Core SecurityChecks
 python3 Scripts/check_boundaries.py
 python3 Scripts/check_repository.py
 ```
 
-With full Xcode installed:
-
-```sh
-swift test --package-path Core
-```
-
-GitHub Actions runs core tests and policy checks on pull requests and pushes to `main`. A separate manual workflow compiles the unsigned iOS app. Neither CI nor mocked unit tests establish real-model quality, physical memory behavior or airplane-mode acceptance. Follow the [device test protocol](BENCHMARKING.md) for those gates.
-
-## Documentation
-
-| Guide | Purpose |
+| Folder | Responsibility |
 |---|---|
-| [Getting started](docs/GETTING_STARTED.md) | Xcode, signing, installation and first analysis |
-| [Architecture](ARCHITECTURE.md) | Components, storage, dates and resource limits |
-| [Security](SECURITY.md) | Trust boundaries, reporting and known limitations |
-| [Benchmarking](BENCHMARKING.md) | Synthetic suite and physical-device acceptance |
-| [Build status](BUILD_STATUS.md) | What has actually been checked |
-| [Roadmap](docs/ROADMAP.md) | Remaining prototype and release gates |
-| [Contributing](CONTRIBUTING.md) | Development workflow and review expectations |
-| [Model licenses](MODEL_LICENSES.md) | Model revisions, attribution and dependency notices |
-| [Original brief](SPECIFICATION.md) | Product requirements |
+| `App/`, `Views/` | Lifecycle, shortcut handoff and native UI |
+| `ShareExtension/`, `Processing/` | Share Sheet intake, OCR and PDF extraction |
+| `AI/` | Local inference, verified downloads and benchmark cases |
+| `Actions/`, `Core/` | Executors, validation, authorization and storage |
+| `Configuration/`, `Resources/` | Signing configuration, model catalog and artwork |
+| `Tests/iOS/`, `Scripts/`, `.github/` | Tests, policy checks and CI |
 
-## Project status and licensing
+## Read more
 
-This repository is a private prototype. No open-source license has been selected for the original application code. Third-party components and model weights retain their respective licenses; see [MODEL_LICENSES.md](MODEL_LICENSES.md). No production release or device performance claims are made.
+[Architecture](ARCHITECTURE.md) · [Security](SECURITY.md) · [Device testing](BENCHMARKING.md) · [Build status](BUILD_STATUS.md) · [Roadmap](docs/ROADMAP.md) · [Contributing](CONTRIBUTING.md) · [Model licenses](MODEL_LICENSES.md) · [Original brief](SPECIFICATION.md)
+
+Private prototype. No open-source license has been selected for original app code. Third-party code and model weights retain their own licenses. User-supplied brand artwork is included as the project logo; no independent rights clearance is claimed.

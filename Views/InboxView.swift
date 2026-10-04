@@ -4,22 +4,53 @@ import PrivateActionCore
 
 struct RootView: View {
     @Environment(AppEnvironment.self) private var app
+    @Environment(\.scenePhase) private var phase
+    @State private var tab = 0
+    @State private var path: [UUID] = []
+    @State private var receiving = false
     var body: some View {
         @Bindable var app = app
         Group {
             if let problem = app.setupError { ContentUnavailableView("Setup needed", systemImage: "lock.trianglebadge.exclamationmark", description: Text(problem)) }
             else {
-                TabView {
-                    NavigationStack { InboxView() }.tabItem { Label("Inbox", systemImage: "tray") }
-                    NavigationStack { SavedView() }.tabItem { Label("Saved", systemImage: "checkmark.square") }
-                    NavigationStack { SettingsView() }.tabItem { Label("Settings", systemImage: "gearshape") }
+                TabView(selection: $tab) {
+                    NavigationStack(path: $path) {
+                        InboxView().navigationDestination(for: UUID.self) { AnalysisView(id: $0) }
+                    }.tabItem { Label("Inbox", systemImage: "tray") }.tag(0)
+                    NavigationStack { SavedView() }.tabItem { Label("Saved", systemImage: "checkmark.square") }.tag(1)
+                    NavigationStack { SettingsView() }.tabItem { Label("Settings", systemImage: "gearshape") }.tag(2)
                 }
             }
-        }.alert("Glean", isPresented: Binding(get: { app.error != nil }, set: { if !$0 { app.error = nil } })) { Button("OK") { app.error = nil } } message: { Text(app.error ?? "") }
+        }
+        .task { await receiveShortcut() }
+        .onChange(of: ShortcutInbox.shared.pendingID) { _, _ in
+            Task { await receiveShortcut() }
+        }
+        .onChange(of: phase) { _, phase in
+            if phase == .active { Task { await receiveShortcut() } }
+        }
+        .alert("Glean", isPresented: Binding(get: { app.error != nil }, set: { if !$0 { app.error = nil } })) { Button("OK") { app.error = nil } } message: { Text(app.error ?? "") }
+    }
+    @MainActor private func receiveShortcut() async {
+        guard phase == .active, !receiving else { return }
+        guard let id = ShortcutInbox.shared.pendingID ?? SharedContainer.takeSharedItem() else { return }
+        receiving = true
+        defer { receiving = false }
+        ShortcutInbox.shared.pendingID = nil
+        await app.refresh()
+        guard phase == .active else { SharedContainer.queueSharedItem(id); return }
+        tab = 0; path = [id]
+        guard let item = app.items.first(where: { $0.id == id }) else { return }
+        if app.isBusy {
+            app.error = "Item saved. Finish the current operation, then tap Analyze Locally."
+        } else {
+            app.analyze(item)
+        }
     }
 }
 struct InboxView: View {
     @Environment(AppEnvironment.self) private var app
+    @State private var showShareGuide = false
     @State private var showText = false
     @State private var showFiles = false
     @State private var deleteTarget: InboxItem?
@@ -29,16 +60,17 @@ struct InboxView: View {
                 VStack(spacing: 22) {
                     Label(app.installed ? "ON-DEVICE INTELLIGENCE" : "YOUR PRIVATE SPACE", systemImage: "lock.fill")
                         .font(.caption2.weight(.semibold)).tracking(2).foregroundStyle(AppStyle.mint)
-                    Text("Make room for\nwhat matters.")
+                    Text("Share it.\nTake the next step.")
                         .font(.system(size: 38, weight: .semibold, design: .rounded)).tracking(-1.5)
                         .multilineTextAlignment(.center).foregroundStyle(.white)
                         .minimumScaleFactor(0.75)
                     Image("GleanLogo").resizable().scaledToFit().frame(width: 180, height: 180).clipShape(RoundedRectangle(cornerRadius: 36)).accessibilityLabel("Glean logo")
                     Text(app.installed ? "Turn a little context into a clear next step." : "Install your local model in Settings to begin.")
                         .font(.subheadline).foregroundStyle(.white.opacity(0.65)).multilineTextAlignment(.center)
-                    Button { showText = true } label: {
-                        Label("Add your context", systemImage: "plus").frame(maxWidth: .infinity)
+                    Button { showShareGuide = true } label: {
+                        Label("How to Share to Glean", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity)
                     }.buttonStyle(EmeraldButtonStyle())
+                    Button("Paste or type text") { showText = true }.font(.subheadline)
                     Button { showFiles = true } label: {
                         Label("Import a photo or PDF", systemImage: "doc.badge.plus")
                             .font(.subheadline).foregroundStyle(AppStyle.mint)
@@ -74,6 +106,7 @@ struct InboxView: View {
         .toolbar { ToolbarItem(placement: .topBarTrailing) { Menu { Button("Add Text", systemImage: "text.badge.plus") { showText = true }; Button("Import Image or PDF", systemImage: "doc.badge.plus") { showFiles = true } } label: { Image(systemName: "plus.circle.fill") } } }
         .refreshable { await app.refresh() }
         .sheet(isPresented: $showText) { AddTextView() }
+        .sheet(isPresented: $showShareGuide) { ShareGuideView() }
         .fileImporter(isPresented: $showFiles, allowedContentTypes: [.image, .pdf]) { result in
             switch result { case .success(let url): Task { await app.importFile(url) }; case .failure(let error): app.report(error) }
         }
@@ -179,5 +212,29 @@ struct EmeraldOrb: View {
                     .shadow(color: AppStyle.mint.opacity(0.8), radius: 8)
             }
         }.accessibilityHidden(true)
+    }
+}
+
+struct ShareGuideView: View {
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("Your everyday flow") {
+                    Label("Select text, a photo, a screenshot or a PDF in another app.", systemImage: "1.circle")
+                    Label("Tap Share, then choose Glean. Use More if it is not visible.", systemImage: "2.circle")
+                    Label("Wait for Saved to Glean, tap Done, then open Glean.", systemImage: "3.circle")
+                    Label("Analysis starts automatically. Review the suggested action before saving.", systemImage: "4.circle")
+                }
+                Section {
+                    Text("If the source app only offers Copy, use Paste or type text in Glean. Available sharing options depend on the source app.")
+                    Text("Keep Glean open and your phone unlocked during analysis. If you shared several items, the newest opens first; the others remain in Inbox.")
+                }
+                Section("Optional: Back Tap") {
+                    Text("Create a shortcut with Take Screenshot → Analyze Screenshot in Glean. Assign it in iPhone Settings → Accessibility → Touch → Back Tap.")
+                }
+            }.navigationTitle("Share to Glean").navigationBarTitleDisplayMode(.inline)
+                .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+        }.tint(AppStyle.mint)
     }
 }

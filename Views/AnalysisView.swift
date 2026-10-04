@@ -11,7 +11,7 @@ struct AnalysisView: View {
     var body: some View {
         Group {
             if let item {
-                if let raw = item.proposal, let proposal = try? OutputValidator.validate(raw) {
+                if let raw = item.proposal, let validated = try? OutputValidator.validate(raw), let proposal = try? ReviewOptions.forProposal(validated) {
                     List {
                         Section {
                             VStack(alignment: .leading, spacing: 10) {
@@ -36,7 +36,7 @@ struct AnalysisView: View {
                             }
                         }
                         Section {
-                            ForEach(raw.proposedActions) { action in
+                            ForEach(proposal.value.proposedActions) { action in
                                 Button { selectedAction = action } label: {
                                     HStack {
                                         Image(systemName: action.type.icon).frame(width: 26)
@@ -45,7 +45,7 @@ struct AnalysisView: View {
                                     }.padding(.vertical, 5)
                                 }.disabled(app.isBusy)
                             }
-                        } header: { Text("Suggested actions") } footer: { Text("AI suggestions can be wrong. Review every detail. Nothing happens until you confirm.") }
+                        } header: { Text("Actions to review") } footer: { Text("AI suggestions can be wrong. Review every detail. Nothing happens until you confirm.") }
                         Label("Analyzed locally · original source removed", systemImage: "lock.fill").font(.caption).foregroundStyle(.secondary)
                     }.sheet(item: $selectedAction) { action in ActionReviewView(itemID: id, proposal: proposal, action: action) }
                 } else {

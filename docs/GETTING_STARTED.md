@@ -1,64 +1,91 @@
-# Getting started
+# Get Glean onto your iPhone
 
-Build and install Glean on a physical iPhone. This is a source prototype; see the [verification status](../BUILD_STATUS.md) before testing.
+[← Back to Glean](../README.md)
 
-## Open and run
+This guide installs the source build from Xcode. There is no App Store or TestFlight release in this repository.
 
-1. Install full Xcode (16.3 or newer, with an iOS SDK supporting your device). Select it in Xcode Settings → Locations → Command Line Tools.
-2. Open **PrivateAction.xcodeproj**. Use the `PrivateAction` scheme.
-3. In both app and Share Extension targets, set your Apple Developer team and unique bundle identifiers. Replace `PRIVATE_ACTION_APP_GROUP` in project build settings with an App Group registered to your team, for example `group.com.yourcompany.PrivateAction.privateaction`. Enable that same group for both targets. The two entitlements and Info.plists already reference the shared build setting.
-4. Resolve packages using the committed `Package.resolved`. If a newer Xcode offers dependency upgrades, keep the pins until you explicitly review them.
-5. Select your physical **standard iPhone 15**. Build and run. The deployment floor is iOS 17; device support depends on your installed Xcode. Simulator use is for UI/intake tests, not MLX performance claims.
-6. Open Settings → Download Local AI Model. The default download is **984,013,244 bytes** across all pinned model/tokenizer files (about 984 MB decimal). No weights are bundled in this source deliverable.
-7. Add text from the inbox, or share one screenshot/image, PDF, text selection or website address from another app. In the Share Extension, tap Done and open Glean from the Home Screen. Open the inbox item and tap Analyze Locally.
-8. Review a suggested action. For Calendar/Reminders, explicitly grant access, choose a writable destination, review/edit fields, confirm the date if present, then tap Add.
+## 1. Prepare your Mac
 
-The Share Extension intentionally uses the supported manual handoff. It does not use responder-chain tricks, private selectors or an unsupported automatic app launch. Safari webpages are not fetched. URL metadata support is limited to the address, supplied title and any text provided by the host in v1; no Safari page-text preprocessing JavaScript is installed.
+Install full **Xcode** from Apple. Open it and complete its initial setup, including the iOS platform components. Use an Xcode version that supports your iPhone's iOS version and the pinned Swift dependencies. Recent development builds used Xcode 26.6.
 
-## What is implemented
+If Xcode asks for **Metal Toolchain**, choose **Download & Install**. MLX needs it to compile GPU code. For a real iPhone you do not need to download a simulator runtime solely to install the app.
 
-- Native SwiftUI Inbox, Analysis, Saved, Settings, Developer and Benchmark screens.
-- App Group inbox with atomic publication, complete file protection, backup exclusion, source expiry and post-analysis source deletion.
-- One shared attachment at a time; image metadata stripped via bounded re-encoding; Vision OCR; native PDF extraction with per-page OCR fallback; URL metadata only.
-- Qwen3 1.7B 4-bit by default; the requested 1.7B 8-bit and 4B 4-bit variants are session-only developer choices. Only the selected model downloads.
-- Pinned model revisions, per-file size and SHA-256 verification, bounded downloads, progress, cancellation/retry and model deletion. Interrupted files restart; completed verified files are reused.
-- Model abstraction, one generation at a time, thinking disabled, greedy decoding, 3,072-token input, 512-token output, token-boundary cancellation/deadlines, thermal/memory checks and cache release.
-- Strict typed output validation, bounded retry, allowlisted actions, user-edited approvals and a durable duplicate-action guard.
-- Calendar and Reminder creation, local saved information/checklists, editable reply drafts with explicit copy/share. No delete-event, send-message, arbitrary URL, file-upload or code-execution capability is exposed to the model.
-- A 20-case synthetic benchmark suite and content-free local metrics. Semantic checks are heuristics, not proof against prompt injection.
+In **Xcode → Settings → Apple Accounts**, add your Apple Account. Enter passwords only into Apple's dialogs, never into source code or GitHub.
 
-MLX LM is pinned to **2.29.3** for the Swift 6.1-compatible integration. This release has no `MLXGuidedGeneration` product. Generation uses a hardened schema prompt plus strict validation and at most one retry, **not token-level grammar constraints**. Upgrading to a newer guided-generation dependency is a documented next step after compilation and tokenizer/device validation; it must not weaken the validator or approval boundary.
+## 2. Download and open the project
 
-## Checks
+Clone the private repository with an authorized GitHub account, or download and extract its ZIP. Open **PrivateAction.xcodeproj** inside the project folder.
 
-From this directory:
+If navigation is confusing, in Finder press **⌘⇧G**, paste the path to your downloaded project folder, and open `PrivateAction.xcodeproj`. Do not open your home folder or `.bash_history`.
 
-```sh
-swift build --package-path Core
-swift run --package-path Core SecurityChecks
-python3 Scripts/check_boundaries.py
-```
+Wait for Package Dependencies to resolve and indexing to finish. Keep the committed dependency versions.
 
-The standalone harness uses deterministic fakes for the model and privileged executors. It runs without downloading weights or contacting the network. It does not establish real offline MLX behavior.
+## 3. Understand the three Xcode selectors
 
-With full Xcode installed:
+| Control | Where it is | What it changes |
+|---|---|---|
+| Project | Blue PrivateAction icon in the far-left sidebar | Opens project settings |
+| Target | Middle column under TARGETS | Signing/settings for app, extension or tests |
+| Scheme and device | Very top toolbar | What Xcode runs and where |
 
-```sh
-swift test --package-path Core
-xcodebuild -project PrivateAction.xcodeproj -scheme PrivateAction \
-  -destination 'platform=iOS Simulator,name=iPhone 16' test
-```
+For installation, the top toolbar must show **PrivateAction → your iPhone**, not PrivateActionShare. Running the extension scheme asks you to choose a host app.
 
-Choose an installed simulator name. The XCTest sources cover core policy and lifecycle; the app-hosted tests add image/PDF handling and model-manifest checks. For hardware validation follow [BENCHMARKING.md](../BENCHMARKING.md), including the two supplied screenshot acceptance cases.
+## 4. Set up signing
 
-`project.yml` is the source for the generated project. With XcodeGen 2.46.0, regenerate using `xcodegen generate`; preserve/commit the dependency lockfile afterward. No XcodeGen installation is needed to open the included project.
+Click the blue project icon. Under **TARGETS**, select **PrivateAction → Signing & Capabilities**.
 
-## Privacy and action semantics
+1. Enable **Automatically manage signing**.
+2. Select your team from **Team**. Use Add Account if none is available.
+3. Choose a unique bundle identifier, such as `com.yourname.Glean`.
+4. Repeat for **PrivateActionShare**, using the same team and a child identifier such as `com.yourname.Glean.Share`.
+5. Select the same team for **PrivateActionTests**, using an appropriate test identifier such as `com.yourname.Glean.Tests`.
 
-Content stays in the app/App Group until you approve a platform action or explicitly share a draft. Calendar and Reminders may sync through the destination account you select; that is visible in the review UI. Copies to the clipboard use local-only, two-minute expiry. The app does not read the clipboard automatically.
+### App Group: the app and extension must agree
 
-Delete All Local Data clears inbox, saved items, action journal and benchmark records. Delete Selected Model removes the selected model and its partial download. Local-data deletion does not remove events or reminders already added to iOS.
+Both components need the same shared storage container.
 
-Raw sources expire after 24 hours when the app next performs startup cleanup. iOS may suspend the app, so deletion is not guaranteed at the exact expiry time. Encryption is iOS Data Protection; this is not a separate app vault with its own key. Saved content is excluded from backup, but no app can promise to control screenshots or all OS behavior.
+1. Under the project's **Build Settings**, choose **All**, search `PRIVATE_ACTION_APP_GROUP`, and set it to an App Group registered to your team, for example `group.com.yourname.Glean`.
+2. Under **Signing & Capabilities → App Groups**, register/select that exact group for both PrivateAction and PrivateActionShare.
+3. Ensure both entitlement files match that group or use `$(PRIVATE_ACTION_APP_GROUP)`. Both Info.plists use the build setting to locate shared storage.
 
-See [ARCHITECTURE.md](../ARCHITECTURE.md), [SECURITY.md](../SECURITY.md), [MODEL_LICENSES.md](../MODEL_LICENSES.md) and [BUILD_STATUS.md](../BUILD_STATUS.md).
+Do not leave different groups in the two targets. Signing availability depends on your team; if Xcode rejects a capability, read the exact error rather than assuming account sign-in alone enables it. Do not buy a membership solely on the basis of this guide.
+
+## 5. Connect the phone
+
+1. Connect your iPhone directly with a cable that supports data.
+2. Unlock the phone and keep it awake.
+3. Accept **Allow accessory to connect** on the Mac if shown.
+4. On the iPhone, tap **Trust This Computer** and enter its passcode.
+5. Confirm the iPhone appears in Finder under **Locations**.
+6. In Xcode, open **Window → Devices and Simulators** if the phone is not yet available in the toolbar. Allow pairing/device preparation to complete.
+
+Charging does not prove a data connection. If Finder cannot see the phone, try another cable or USB port.
+
+## 6. Enable Developer Mode and run
+
+On your iPhone, open **Settings → Privacy & Security → Developer Mode**. Enable it, restart if prompted, then unlock and confirm **Turn On**.
+
+In Xcode choose **PrivateAction → your iPhone**, then press **⌘R**. Allow the initial build to finish.
+
+- **codesign keychain prompt:** enter the Mac login-keychain password (normally your Mac login password). Allow grants access for this request; Always Allow persists access for future signing.
+- **Untrusted Developer on iPhone:** open **Settings → General → VPN & Device Management**, select your own development account, and trust it. Follow any verification/restart prompts and keep an internet connection for verification.
+
+Glean should launch. Signing credentials and provisioning profiles are local; never commit private keys.
+
+## 7. Install the local model
+
+Inside **Glean on the iPhone**, tap **Settings → Download Local AI Model**. This is not Xcode's Build Settings or the iPhone Settings app.
+
+Use the default **Qwen3 1.7B 4-bit**. Its pinned files total 984,013,244 bytes, about 984 MB. Allow additional space for installation and app data. Prefer Wi-Fi and keep Glean open until the download finishes. Do not select a larger experimental model for initial testing.
+
+## 8. Your first analysis
+
+Choose **Paste or type text** in Glean, enter a short note, add it to Inbox, open it and tap **Analyze Locally**.
+
+For a calendar test, use a future date relevant to you:
+
+> Project review on 10 October 2026, from 7 PM to 8 PM India Standard Time.
+
+Review the extracted facts. For an Event result, choose **Add to Calendar**, grant permission, select a writable calendar, set/check start and end, enable **I checked the date and time**, and confirm. Open Apple Calendar to verify exactly one event. Do not assume a successful analysis means an event was saved.
+
+[Everyday use →](USING_GLEAN.md) · [Back Tap →](SCREENSHOT_SHORTCUT.md) · [Troubleshooting →](TROUBLESHOOTING.md)

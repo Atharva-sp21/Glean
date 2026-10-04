@@ -63,3 +63,16 @@ final class ModelOutputEnvelopeTests: XCTestCase {
         }
     }
 }
+
+final class EventReviewOptionsTests: XCTestCase {
+    func testEventOffersCalendarButStillRequiresDateConfirmation() throws {
+        let json = #"{"category":"event","title":"Meeting","summary":"Saturday evening","dates":[],"locations":[],"people":[],"checklist":[],"proposedActions":[{"type":"saveInformation","title":"Save","explanation":"Reference"}]}"#
+        let proposal = try ReviewOptions.forProposal(OutputValidator.decode(Data(json.utf8)))
+        XCTAssertEqual(proposal.value.proposedActions.first?.type, .createCalendarEvent)
+        XCTAssertTrue(proposal.value.dates.isEmpty)
+        let review = ActionReview(itemID: UUID(), type: .createCalendarEvent, title: "Meeting", body: "")
+        XCTAssertThrowsError(try UserConfirmation.approve(review, proposal: proposal))
+        let repeated = try ReviewOptions.forProposal(proposal)
+        XCTAssertEqual(repeated.value.proposedActions.count, 2)
+    }
+}

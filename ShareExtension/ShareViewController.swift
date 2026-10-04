@@ -28,8 +28,9 @@ final class ShareViewController: UIViewController {
                 guard providers.count == 1, let provider = providers.first else { throw PrivateActionError.tooLarge }
                 let (data, kind) = try await SharedInboxWriter.load(provider, suppliedTitle: extensionItems.first?.attributedTitle?.string, suppliedText: extensionItems.first?.attributedContentText?.string)
                 try Task.checkCancellation()
-                _ = try await store.importData(data, kind: kind)
-                message.text = "Ready for analysis.\n\nTap Done, then open Glean from your Home Screen. Your content stays on this iPhone."
+                let item = try await store.importData(data, kind: kind)
+                SharedContainer.queueSharedItem(item.id)
+                message.text = "Saved to Glean.\n\nTap Done, then open Glean. Analysis starts automatically, and you review any suggested action before saving."
             } catch { message.text = "Couldn’t save this item. Share one image, PDF, website address or text selection (up to 20 MB)." }
         }
     }
