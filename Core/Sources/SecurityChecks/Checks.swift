@@ -81,8 +81,10 @@ struct CheckFailure: Error, CustomStringConvertible { let description: String }
         try check("denied Reminder has zero writes") { deniedReminder.writes == 0 }
         let model = FakeModel(json: Data(json.utf8))
         let manager = ModelManager(runner: model)
-        let result = try await manager.analyze(direct)
-        try check("network-free injected model orchestration") { result.proposal.value.title == "Dentist" }
+        try await rejectsAsync("instruction-spoofed source fails closed") { _ = try await manager.analyze(direct) }
+        let supportedSource = try AnalysisInput(text: "Dentist Appointment October 8, 11 AM")
+        let result = try await manager.analyze(supportedSource)
+        try check("network-free source-grounded model orchestration") { result.proposal.value.title == "Dentist" }
         let missing = ModelManager(runner: FakeModel(json: Data(), loadError: .missingModel))
         try await rejectsAsync("no model downloaded") { _ = try await missing.analyze(direct) }
         let lowMemory = ModelManager(runner: FakeModel(json: Data(), loadError: .lowMemory))
