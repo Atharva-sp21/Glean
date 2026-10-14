@@ -61,6 +61,9 @@ import PrivateActionCore
         let item = SavedItem(id: UUID(), title: action.review.title, body: action.review.body, checklist: checklist)
         try SecureFiles.write(JSONEncoder().encode(item), to: root.appendingPathComponent(item.id.uuidString + ".json"))
     }
+    func save(_ item: SavedItem) throws {
+        try SecureFiles.write(JSONEncoder().encode(item), to: root.appendingPathComponent(item.id.uuidString + ".json"))
+    }
     func update(_ item: SavedItem) throws {
         let file = root.appendingPathComponent(item.id.uuidString + ".json")
         guard FileManager.default.fileExists(atPath: file.path) else { throw PrivateActionError.invalidInput }
@@ -70,6 +73,9 @@ import PrivateActionCore
         try FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil).map {
             try JSONDecoder().decode(SavedItem.self, from: SecureFiles.read($0, limit: 64_000))
         }.sorted { $0.createdAt > $1.createdAt }
+    }
+    func delete(_ id: UUID) throws {
+        try FileManager.default.removeItem(at: root.appendingPathComponent(id.uuidString + ".json"))
     }
     func deleteAll() throws {
         for url in try FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil) { try FileManager.default.removeItem(at: url) }

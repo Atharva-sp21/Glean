@@ -85,12 +85,13 @@ public struct AnalysisInput: Sendable {
     public init(text: String) throws { self.text = try InputValidator.text(text) }
 }
 public enum PrivateActionError: String, Error, LocalizedError, Sendable {
-    case invalidInput, tooLarge, invalidOutput, invalidDate, unsafeURL, missingModel, corruptModel
+    case invalidInput, tooLarge, invalidOutput, ungroundedOutput, invalidDate, unsafeURL, missingModel, corruptModel
     case busy, cancelled, timedOut, lowMemory, tooHot, permissionDenied, alreadyPerformed, unavailable
     public var errorDescription: String? {
         switch self {
         case .invalidInput: "This content could not be read safely. Try sharing text or a smaller file."
         case .tooLarge: "This content exceeds the analysis limit. Share a smaller selection."
+        case .ungroundedOutput: "AI output could not be grounded in your source. Review the original text instead."
         case .invalidOutput: "Local AI returned an invalid result. Nothing was executed. Try analyzing again."
         case .invalidDate: "Confirm a valid date and time before continuing."
         case .unsafeURL: "Only ordinary HTTPS or HTTP website addresses are accepted."

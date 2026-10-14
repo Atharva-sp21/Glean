@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AABBCC112233445566778801 /* GmailConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABBCC112233445566778802 /* GmailConnection.swift */; };
 		21DE505309757A679AD99C07 /* PrivateActionCore in Frameworks */ = {isa = PBXBuildFile; productRef = 4CB466168B7706BF730D3998 /* PrivateActionCore */; };
 		228681D0683953E34EB795E1 /* ModelDownloadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AADE1DC7B5BF8FE274D8738 /* ModelDownloadService.swift */; };
 		24C9425877109D5EE4B9F2CC /* BenchmarkSuite.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E86E96EE702BB509273572 /* BenchmarkSuite.swift */; };
@@ -70,6 +71,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		AABBCC112233445566778802 /* GmailConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GmailConnection.swift; sourceTree = "<group>"; };
 		095E4022859238C5E83EF20A /* LifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifecycleTests.swift; sourceTree = "<group>"; };
 		099D995AD1DD111285650BD1 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		12EB0F13128A813039C2DEBF /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
@@ -131,6 +133,7 @@
 			children = (
 				099D995AD1DD111285650BD1 /* AppEnvironment.swift */,
 				33DF2E1BA0E2574CF85D7F2F /* PrivateActionApp.swift */,
+				AABBCC112233445566778802 /* GmailConnection.swift */,
 				3EA61B88F70D2F7EF3E3A265 /* SharedContainer.swift */,
 			);
 			path = App;
@@ -443,6 +446,7 @@
 				847D1910B98C8A3AF705084C /* InboxView.swift in Sources */,
 				228681D0683953E34EB795E1 /* ModelDownloadService.swift in Sources */,
 				765212C5F89CDEAC6F707032 /* PrivateActionApp.swift in Sources */,
+				AABBCC112233445566778801 /* GmailConnection.swift in Sources */,
 				938A5433227277A6F693C338 /* QwenModelRunner.swift in Sources */,
 				D54894D172E54EFB9751A9BB /* SettingsView.swift in Sources */,
 				30614C4F5FFE8FB29427682D /* SharedContainer.swift in Sources */,

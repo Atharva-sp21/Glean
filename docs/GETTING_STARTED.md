@@ -72,9 +72,9 @@ In Xcode choose **PrivateAction → your iPhone**, then press **⌘R**. Allow th
 
 Glean should launch. Signing credentials and provisioning profiles are local; never commit private keys.
 
-## 7. Install the local model
+## 7. Save source text or install the optional local model
 
-Inside **Glean on the iPhone**, tap **Settings → Download Local AI Model**. This is not Xcode's Build Settings or the iPhone Settings app.
+To read and save without a model, open an inbox item and choose **Read & save without AI**. To try AI analysis, inside **Glean on the iPhone**, tap **Settings → Download Local AI Model**. This is not Xcode's Build Settings or the iPhone Settings app.
 
 Use the default **Qwen3 1.7B 4-bit**. Its pinned files total 984,013,244 bytes, about 984 MB. Allow additional space for installation and app data. Prefer Wi-Fi and keep Glean open until the download finishes. Do not select a larger experimental model for initial testing.
 

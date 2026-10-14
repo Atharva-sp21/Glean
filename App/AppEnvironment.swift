@@ -66,6 +66,15 @@ import OSLog
             }
         } catch { report(error) }
     }
+    func importEmail(_ text: String) async -> Bool {
+        guard !isBusy, let inbox else { return false }
+        do {
+            let value = try InputValidator.text(text)
+            _ = try await inbox.importData(Data(value.utf8), kind: .text)
+            await refresh()
+            return true
+        } catch { report(error); return false }
+    }
     func importText(_ text: String) async {
         do {
             let value = try InputValidator.text(text)
@@ -88,7 +97,22 @@ import OSLog
             _ = try await inbox?.importData(result, kind: kind); await refresh()
         } catch { report(error) }
     }
+    func readSource(_ item: InboxItem) async throws -> String {
+        guard !isBusy, let inbox else { throw PrivateActionError.busy }
+        maintenance = true; defer { maintenance = false }
+        return try await ContentProcessor().process(item, url: await inbox.payloadURL(item)).text
+    }
+    func saveSource(_ text: String) async -> Bool {
+        guard !isBusy, let saver else { return false }
+        do {
+            let value = try InputValidator.text(text)
+            guard saved.count < SecurityPolicy.maxSavedItems else { throw PrivateActionError.tooLarge }
+            let item = SavedItem(id: UUID(), title: String(value.prefix(80)), body: value)
+            try saver.save(item); await refresh(); return true
+        } catch { report(error); return false }
+    }
     func analyze(_ item: InboxItem) {
+        guard UIApplication.shared.applicationState == .active else { return }
         guard !isBusy, let inbox, let manager else { return }
         guard installed else { error = PrivateActionError.missingModel.localizedDescription; return }
         activeItem = item.id
@@ -148,8 +172,19 @@ import OSLog
         do { try await downloader?.delete(selected); await refresh() } catch { report(error) }
     }
     func deleteItem(_ item: InboxItem) async {
-        guard !isBusy else { return }
-        do { try await inbox?.delete(item.id); await refresh() } catch { report(error) }
+        guard !isBusy, let inbox else { return }
+        maintenance = true; defer { maintenance = false }
+        do {
+            try await inbox.delete(item.id)
+            withAnimation(.easeInOut(duration: 0.22)) { items.removeAll { $0.id == item.id } }
+        } catch { report(error) }
+    }
+    func deleteSaved(_ item: SavedItem) {
+        guard !isBusy, let saver else { return }
+        do {
+            try saver.delete(item.id)
+            withAnimation(.easeInOut(duration: 0.22)) { saved.removeAll { $0.id == item.id } }
+        } catch { report(error) }
     }
     func toggleSaved(_ itemID: UUID, rowID: UUID) {
         guard !isBusy, let itemIndex = saved.firstIndex(where: { $0.id == itemID }),

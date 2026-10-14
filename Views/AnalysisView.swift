@@ -6,6 +6,9 @@ struct AnalysisView: View {
     @Environment(AppEnvironment.self) private var app
     let id: UUID
     @State private var selectedAction: ProposedAction?
+    @State private var sourceText = ""
+    @State private var showSource = false
+    @State private var savingSource = false
     @State private var checked: Set<String> = []
     private var item: InboxItem? { app.items.first { $0.id == id } }
     var body: some View {
@@ -57,12 +60,35 @@ struct AnalysisView: View {
                             ProgressView(); Button("Cancel Analysis", role: .cancel) { app.cancelAnalysis() }
                         } else {
                             Button("Analyze Locally", systemImage: "sparkles") { app.analyze(item) }.buttonStyle(EmeraldButtonStyle()).disabled(app.isBusy || !app.installed)
-                            if !app.installed { Text("Install the local AI model in Settings first.").font(.footnote) }
+                            Button("Read & save without AI", systemImage: "doc.text") {
+                                Task {
+                                    do { sourceText = try await app.readSource(item); showSource = true }
+                                    catch { app.report(error) }
+                                }
+                            }.disabled(app.isBusy)
+                            if !app.installed { Text("AI is optional. Read and save now, or download the model in Settings.").font(.footnote) }
                         }
                     }.padding(28).frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             } else { ContentUnavailableView("Item removed", systemImage: "tray") }
         }.background(AppBackdrop()).navigationTitle("Analysis").navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showSource, onDismiss: { sourceText = "" }) {
+                NavigationStack {
+                    VStack {
+                        Text("Source text · no AI summary. Check OCR for mistakes.").font(.caption).foregroundStyle(.secondary)
+                        TextEditor(text: $sourceText).padding()
+                    }.navigationTitle("Review source")
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) { Button("Cancel") { showSource = false } }
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button("Save note") {
+                                    savingSource = true
+                                    Task { if await app.saveSource(sourceText) { showSource = false }; savingSource = false }
+                                }.disabled(savingSource || sourceText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                            }
+                        }
+                }.interactiveDismissDisabled(savingSource)
+            }
     }
 }
 

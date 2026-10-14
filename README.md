@@ -54,7 +54,9 @@ You need a Mac with full Xcode, an Apple Account, a compatible physical iPhone a
 3. Select your signing team and configure the same App Group for the app and extension.
 4. Connect and trust your iPhone; enable Developer Mode when prompted.
 5. Select **PrivateAction → your iPhone** in the top toolbar and press **⌘R**.
-6. Inside Glean, open **Settings → Download Local AI Model**.
+6. Use **Read & save without AI**, or install the optional model in **Settings → Download Local AI Model**.
+
+**App stopped opening after a week?** Free Personal Team installations expire after seven days. Connect your iPhone and run the same project again with **⌘R**. [Recovery steps →](docs/TROUBLESHOOTING.md)
 
 **New to Xcode?** Follow the [complete iPhone setup guide](docs/GETTING_STARTED.md). It explains project versus target versus scheme, signing, device trust, model installation and your first test.
 
@@ -65,7 +67,7 @@ The product is **Glean**. Internal names such as `PrivateAction.xcodeproj`, `Pri
 - **On-device processing:** SwiftUI, Vision OCR, PDFKit and MLX Swift. No cloud AI endpoint or analytics.
 - **One model download:** Qwen3 1.7B 4-bit, approximately 984 MB; pinned revisions and SHA-256 verification. Apple Intelligence is not required.
 - **Review before writing:** Calendar and Reminders require permission, a destination and explicit confirmation. Event results offer a calendar review option even if the model omits that suggestion.
-- **Untrusted output:** schema validation, bounded retries and action allowlists. Missing list fields may normalize to empty arrays; unknown fields remain rejected.
+- **Untrusted output:** schema validation, source-excerpt checks, bounded retries and action allowlists. Missing list fields may normalize to empty arrays; unknown fields remain rejected.
 - **Protected intake:** images are re-encoded, originals are removed after successful analysis, and stale source cleanup runs at startup. Saved results remain until deleted.
 
 Calendar/Reminder accounts may sync the content you approve. Explicitly sharing a reply draft passes it to the chosen app. Read the [security model](SECURITY.md) for boundaries and limitations.

@@ -15,8 +15,18 @@
 | Developer Mode disabled | Enable on the iPhone under Settings → Privacy & Security, restart and confirm |
 | Untrusted Developer | Trust your own development account in Settings → General → VPN & Device Management |
 | Storage setup/App Group error | Match the app/extension entitlements and `PRIVATE_ACTION_APP_GROUP`; rebuild and unlock the phone |
-| Analyze disabled | Download the model inside Glean's Settings; wait for other operations to finish |
+| Analyze disabled | Use **Read & save without AI**, or install the optional model in Glean Settings; wait for other operations to finish |
 | Missing shortcut action | Install latest build, open Glean, then reopen Shortcuts |
+
+## Glean stopped opening after a week
+
+A free Apple Personal Team provisioning profile expires seven days after issuance. Connect and unlock your iPhone, open **PrivateAction.xcodeproj**, select **PrivateAction → your iPhone** and press **⌘R** to renew and reinstall. Keep the same bundle identifier and App Group to preserve the existing app's storage. Avoid deleting the app as a first step.
+
+[Apple's provisioning limits](https://developer.apple.com/help/account/basics/about-your-developer-account) explain why this repeats for free development installations. A GitHub push updates source code; it does not update or renew the phone installation.
+
+## Cannot find Glean on GitHub
+
+The repository is [Atharva-sp21/Glean](https://github.com/Atharva-sp21/Glean), renamed from private-action. It is private: sign in with the owner account or an account granted access. The project file and Xcode scheme retain the internal name **PrivateAction**.
 
 ## “Local AI returned an invalid result”
 
@@ -28,6 +38,7 @@ Open **Glean → Settings → Developer → Benchmark → Measured local runs**.
 |---|---|
 | `top_level_keys missing=[…] extra_count=…` | Missing required fields or unexpected fields |
 | `field_type_or_enum` | Wrong value type or unsupported category/action |
+| `source_grounding` | Displayed AI text could not be verified as a source excerpt, or instruction spoofing was detected; read/save the source instead |
 | `field_constraint` | JSON decoded but a validation constraint failed |
 | `markdown_wrapper` / `thinking_markup` | Extra formatting instead of the expected JSON object |
 | `token_limit_invalid_json` | Output reached its cap and was not valid JSON |

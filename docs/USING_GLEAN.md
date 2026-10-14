@@ -49,3 +49,23 @@ Use [Back Tap setup](SCREENSHOT_SHORTCUT.md) to capture the current screen and h
 ## Current boundaries
 
 Glean does not monitor chats, control WhatsApp, import entire recurring timetables, reconcile existing events or send replies automatically. Inference quality is still under device testing. Keep the app visible during analysis; see [known issues](TROUBLESHOOTING.md).
+
+### WhatsApp and Gmail
+
+Open **Inbox → From WhatsApp or Gmail**, or **Settings → Import from apps → WhatsApp & Gmail**. These are selected-content import flows, not account connections.
+
+- **WhatsApp:** copy a message and paste it into Glean. For photos or documents, use the system share sheet if WhatsApp offers it. Screenshots are another option.
+- **Gmail:** copy the relevant email text, including its subject and dates, and paste it into Glean. Share supported attachments or capture a screenshot when text selection is inconvenient.
+- **Back Tap:** the setup guide is available from this screen. It requires one-time configuration in Shortcuts and iPhone Settings.
+
+Personal WhatsApp chats are not automatically read. Gmail sign-in and a recent-email picker are available once the developer configures Google OAuth; automatic inbox synchronization is not implemented. See [account setup](ACCOUNT_CONNECTIONS.md).
+
+### Delete individual items
+
+Swipe left on an Inbox or Saved row, tap **Delete**, then confirm. Full-swipe deletion is disabled. The row is removed with an animation only after its local file is deleted successfully; errors leave it visible. Deleting an inbox item keeps separately saved notes. Neither flow deletes previously created calendar events or reminders. Deletion is permanent after confirmation.
+
+## Use Glean without downloading AI
+
+Open an unprocessed item and choose **Read & save without AI**. Review the extracted text, correct any OCR mistakes, and choose **Save note**. This saves source text locally without loading a language model. AI analysis is optional; its model download is separate from the app.
+
+AI output now has a conservative source-excerpt check. Unsupported text is rejected, and unverified people, locations and model-generated timestamps are omitted. This does not guarantee correct interpretation. If analysis fails, use source review instead. Always verify dates and actions before confirming them.

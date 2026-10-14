@@ -24,3 +24,20 @@ final class ProcessingTests: XCTestCase {
         for manifest in manifests { XCTAssertEqual(manifest.revision.count, 40); for file in manifest.files { XCTAssertEqual(file.sha256.count, 64) } }
     }
 }
+
+
+final class GmailParsingTests: XCTestCase {
+    func testMultipartIgnoresAttachmentAndHTML() throws {
+        let json = #"{"id":"a1","payload":{"mimeType":"multipart/mixed","headers":[{"name":"Subject","value":"Meeting"}],"parts":[{"mimeType":"text/plain","body":{"data":"TWVldCBhdCA3"}},{"mimeType":"text/plain","filename":"private.txt","body":{"data":"U2VjcmV0"}},{"mimeType":"text/html","body":{"data":"PGltZz4"}}]}}"#
+        let message = try JSONDecoder().decode(GmailMessage.self, from: Data(json.utf8))
+        XCTAssertEqual(message.title, "Meeting")
+        XCTAssertEqual(message.payload?.plainText, "Meet at 7")
+        XCTAssertFalse(message.importText.contains("Secret"))
+    }
+    func testInvalidBase64IsNotImportedAsContent() throws {
+        let json = #"{"id":"a2","payload":{"mimeType":"text/plain","body":{"data":"%%%"}}}"#
+        let message = try JSONDecoder().decode(GmailMessage.self, from: Data(json.utf8))
+        XCTAssertEqual(message.payload?.plainText, "")
+        XCTAssertEqual(message.title, "(No subject)")
+    }
+}

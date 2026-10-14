@@ -65,11 +65,14 @@ struct InboxView: View {
                         .multilineTextAlignment(.center).foregroundStyle(.white)
                         .minimumScaleFactor(0.75)
                     Image("GleanLogo").resizable().scaledToFit().frame(width: 180, height: 180).clipShape(RoundedRectangle(cornerRadius: 36)).accessibilityLabel("Glean logo")
-                    Text(app.installed ? "Turn a little context into a clear next step." : "Install your local model in Settings to begin.")
+                    Text(app.installed ? "Turn a little context into a clear next step." : "Read and save now. Add optional local AI in Settings.")
                         .font(.subheadline).foregroundStyle(.white.opacity(0.65)).multilineTextAlignment(.center)
                     Button { showShareGuide = true } label: {
                         Label("How to Share to Glean", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity)
                     }.buttonStyle(EmeraldButtonStyle())
+                    NavigationLink { ConnectedAppsView() } label: {
+                        Label("From WhatsApp or Gmail", systemImage: "bubble.left.and.text.bubble.right")
+                    }.font(.subheadline)
                     Button("Paste or type text") { showText = true }.font(.subheadline)
                     Button { showFiles = true } label: {
                         Label("Import a photo or PDF", systemImage: "doc.badge.plus")
@@ -95,7 +98,10 @@ struct InboxView: View {
                                 if item.status == .processing { ProgressView() }
                                 else { Text(item.status.rawValue.capitalized).font(.caption.weight(.medium)).foregroundStyle(item.status == .failed ? .orange : .secondary) }
                             }.padding(.vertical, 5)
-                        }.swipeActions { Button("Delete", role: .destructive) { deleteTarget = item }.disabled(app.isBusy) }
+                        }.swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button("Delete", systemImage: "trash") { deleteTarget = item }
+                                .tint(.red).disabled(app.isBusy)
+                        }
                     }
                 }
             }
@@ -112,6 +118,9 @@ struct InboxView: View {
         }
         .confirmationDialog("Delete this item and its local content?", isPresented: Binding(get: { deleteTarget != nil }, set: { if !$0 { deleteTarget = nil } }), titleVisibility: .visible) {
             Button("Delete Item", role: .destructive) { if let item = deleteTarget { Task { await app.deleteItem(item) } }; deleteTarget = nil }
+            Button("Cancel", role: .cancel) { deleteTarget = nil }
+        } message: {
+            Text("This removes the inbox item from Glean. Saved notes, calendar events and reminders are kept.")
         }
     }
     private func icon(_ kind: SourceKind) -> String { switch kind { case .image: "photo"; case .pdf: "doc.richtext"; case .text: "text.alignleft"; case .url: "link" } }
@@ -146,13 +155,23 @@ struct AddTextView: View {
 }
 struct SavedView: View {
     @Environment(AppEnvironment.self) private var app
+    @State private var deleteTarget: SavedItem?
     var body: some View {
         List {
             if app.saved.isEmpty { ContentUnavailableView("Nothing saved yet", systemImage: "checkmark.square", description: Text("Checklists and information you choose to save appear here.")) }
             ForEach(app.saved) { item in
                 NavigationLink { SavedDetailView(id: item.id) } label: { Label(item.title, systemImage: item.checklist.isEmpty ? "doc.text" : "checklist") }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button("Delete", systemImage: "trash") { deleteTarget = item }.tint(.red).disabled(app.isBusy)
+                    }
             }
         }.scrollContentBackground(.hidden).background(AppBackdrop()).navigationTitle("Saved")
+            .confirmationDialog("Delete this saved item?", isPresented: Binding(get: { deleteTarget != nil }, set: { if !$0 { deleteTarget = nil } }), titleVisibility: .visible) {
+                Button("Delete Saved Item", role: .destructive) {
+                    if let item = deleteTarget { app.deleteSaved(item) }; deleteTarget = nil
+                }
+                Button("Cancel", role: .cancel) { deleteTarget = nil }
+            } message: { Text("This permanently removes the saved note or checklist. Calendar events and reminders are kept.") }
     }
 }
 
@@ -231,10 +250,106 @@ struct ShareGuideView: View {
                     Text("Keep Glean open and your phone unlocked during analysis. If you shared several items, the newest opens first; the others remain in Inbox.")
                 }
                 Section("Optional: Back Tap") {
-                    Text("Create a shortcut with Take Screenshot → Analyze Screenshot in Glean. Assign it in iPhone Settings → Accessibility → Touch → Back Tap.")
+                    NavigationLink("Set up Back Tap Capture") { BackTapSetupView() }
                 }
             }.navigationTitle("Share to Glean").navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }.tint(AppStyle.mint)
+    }
+}
+
+
+struct ConnectedAppsView: View {
+    @State private var showText = false
+    var body: some View {
+        List {
+            Section {
+                Text("Bring the useful part.").font(.title2.bold())
+                Text("Choose a message or email to bring into Glean. Analysis stays on this iPhone; actions are reviewed before saving.")
+            }
+            Section("WhatsApp") {
+                Label("Import selected content", systemImage: "bubble.left.and.bubble.right")
+                Text("For a message, press and hold it in WhatsApp and choose Copy. Return here and paste it into Glean.")
+                Text("For a photo or document, use Share → Glean when available. You can also capture a screenshot of the conversation.")
+                Text("Glean does not connect to or automatically read your personal chats.").font(.footnote).foregroundStyle(.secondary)
+                Button("Paste a WhatsApp message", systemImage: "doc.on.clipboard") { showText = true }
+            }
+            Section("Gmail") {
+                Label("Import selected content", systemImage: "envelope")
+                Text("Select and copy the relevant email text in Gmail, then paste it here. Include the subject and any dates or times needed for the action.")
+                Text("Share an attachment to Glean when that option is available, or capture a screenshot of the email.")
+                NavigationLink("Connect Gmail & choose an email") { GmailPickerView() }
+                Button("Paste an email", systemImage: "doc.on.clipboard") { showText = true }
+            }
+            Section("Capture the screen") {
+                NavigationLink("Set up Back Tap") { BackTapSetupView() }
+                Text("Capture only what you want to analyze. Keep Glean open while local analysis runs.").font(.footnote).foregroundStyle(.secondary)
+            }
+        }.navigationTitle("WhatsApp & Gmail").navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden).background(AppBackdrop())
+            .sheet(isPresented: $showText) { AddTextView() }
+    }
+}
+
+
+struct GmailPickerView: View {
+    @Environment(AppEnvironment.self) private var app
+    @State private var gmail = GmailConnection()
+    @State private var draft = ""
+    @State private var showDraft = false
+    @State private var imported = false
+    var body: some View {
+        List {
+            Section {
+                Text("Choose an email. Keep the analysis local.").font(.headline)
+                Text("Google grants read-only mailbox access. Glean lists your 20 most recent inbox messages and fetches a body only when you select it. It cannot send or delete mail.")
+                Text("Sign-in lasts for this screen session. Leaving clears credentials and previews. Imported items remain in your Inbox.").font(.footnote).foregroundStyle(.secondary)
+            }
+            if gmail.clientID == nil {
+                Section("Developer setup required") {
+                    Text("The Google iOS OAuth client has not been configured for this build. Sign-in becomes available after the app owner completes Google Cloud setup.")
+                }
+            } else if !gmail.connected {
+                Button("Sign in with Google") { Task { await gmail.connect(); if gmail.connected { await gmail.load() } } }.disabled(gmail.busy)
+            } else {
+                Section {
+                    Button("Refresh inbox") { Task { await gmail.load() } }.disabled(gmail.busy)
+                    Button("Disconnect", role: .destructive) { gmail.disconnect() }.disabled(gmail.busy)
+                }
+                Section("Recent emails") {
+                    if gmail.messages.isEmpty && !gmail.busy { Text("No inbox messages found.").foregroundStyle(.secondary) }
+                    ForEach(gmail.messages) { message in
+                        Button {
+                            Task { if let text = await gmail.selectedText(message.id) { draft = text; imported = false; showDraft = true } }
+                        } label: {
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(message.title).font(.headline).lineLimit(2)
+                                Text(message.header("From")).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                            }
+                        }.disabled(gmail.busy || app.isBusy)
+                    }
+                }
+            }
+            if gmail.busy { ProgressView("Connecting to Google…") }
+            if let error = gmail.error { Text(error).foregroundStyle(.orange) }
+        }.navigationTitle("Gmail").navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden).background(AppBackdrop())
+            .onDisappear { if !showDraft { gmail.disconnect() } }
+            .sheet(isPresented: $showDraft, onDismiss: { draft = "" }) {
+                NavigationStack {
+                    ScrollView { Text(draft).textSelection(.enabled).padding() }
+                        .navigationTitle("Review email")
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) { Button("Cancel") { showDraft = false } }
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button(imported ? "Added" : "Add to Glean") {
+                                    Task {
+                                        if await app.importEmail(draft) { imported = true; showDraft = false }
+                                    }
+                                }.disabled(imported || app.isBusy)
+                            }
+                        }
+                }
+            }
     }
 }

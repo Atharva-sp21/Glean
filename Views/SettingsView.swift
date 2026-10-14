@@ -30,14 +30,18 @@ struct SettingsView: View {
                     Text("Model integrity is verified before every load.").font(.caption).foregroundStyle(.secondary)
                 }
             }
+            Section("Import from apps") {
+                NavigationLink("WhatsApp & Gmail") { ConnectedAppsView() }
+            }
             Section("Share to Glean") {
                 NavigationLink("How sharing works") { ShareGuideView() }
                 Text("Share from another app, then open Glean for automatic analysis and action review.")
             }
-            Section("Optional: Back Tap shortcut") {
-                Text("In Shortcuts, create Glean Screenshot with Take Screenshot followed by Analyze Screenshot in Glean. Pass the screenshot into the Glean action.")
-                Text("Then choose it in iPhone Settings → Accessibility → Touch → Back Tap.")
-                Text("Glean opens and analyzes automatically. Keep it visible while processing, then review any calendar or reminder action before saving.").font(.footnote).foregroundStyle(.secondary)
+            Section("Quick capture") {
+                NavigationLink { BackTapSetupView() } label: {
+                    Label("Enable Back Tap Capture", systemImage: "hand.tap")
+                }
+                Text("One-time guided setup, powered by Apple Shortcuts.").font(.footnote).foregroundStyle(.secondary)
             }
             Section("Privacy") {
                 LabeledContent("Inference", value: "On device")
@@ -132,5 +136,65 @@ struct BenchmarkView: View {
                 }
             }
         }.navigationTitle("Benchmark")
+    }
+}
+
+
+struct BackTapSetupView: View {
+    @Environment(\.openURL) private var openURL
+    @State private var showManual = false
+    @State private var launchError = false
+    // Set only after publishing and testing the actual two-action shortcut.
+    private var installURL: URL? {
+        guard let raw = Bundle.main.object(forInfoDictionaryKey: "GleanScreenshotShortcutURL") as? String,
+              let url = URL(string: raw), url.scheme == "https", url.host == "www.icloud.com",
+              url.path.hasPrefix("/shortcuts/"), url.path.split(separator: "/").count == 2 else { return nil }
+        return url
+    }
+    var body: some View {
+        List {
+            Section {
+                Label("Capture a moment. Find the next step.", systemImage: "hand.tap.fill")
+                    .font(.title2.bold()).foregroundStyle(AppStyle.mint)
+                Text("Tap the back of your iPhone to capture the current screen and open Glean for local analysis.")
+                Text("Apple requires you to add a shortcut and assign Back Tap once. Glean cannot enable or verify that system setting for you.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+            Section("1 · Add the screenshot shortcut") {
+                if let url = installURL {
+                    Button("Add Shortcut", systemImage: "plus.circle.fill") { openURL(url) }
+                    Text("Review the shortcut in Apple Shortcuts, then tap Add Shortcut. Return here to continue.")
+                } else {
+                    Text("The ready-made shortcut link is not available in this build. You can create it using the steps below.")
+                }
+                DisclosureGroup("Manual setup", isExpanded: $showManual) {
+                    Text("Open Shortcuts → +. Name it Glean Screenshot.")
+                    Text("Add Take Screenshot, followed by Analyze Screenshot in Glean.")
+                    Text("In the Glean action, hold Choose beside Screenshot, select a variable, and choose the output of Take Screenshot. Save the shortcut.")
+                }
+                Button("Open Shortcuts", systemImage: "arrow.up.forward.app") {
+                    if let url = URL(string: "shortcuts://") {
+                        openURL(url) { accepted in launchError = !accepted }
+                    }
+                }
+            }
+            Section("2 · Assign Back Tap") {
+                Text("Open iPhone Settings → Accessibility → Touch → Back Tap.")
+                Text("Choose Double Tap or Triple Tap, then select Glean Screenshot under Shortcuts.")
+                Text("Triple Tap can help avoid accidental captures. You only need to set this once.").font(.footnote).foregroundStyle(.secondary)
+            }
+            Section("3 · Try it") {
+                Text("Display a short meeting note in Notes. Tap the back of the unlocked phone using your chosen gesture.")
+                Text("Glean should open and analyze the screenshot. Keep Glean visible while processing, then review dates and destinations before saving.")
+                Text("The screenshot includes everything visible, including surrounding messages. No content is captured just by opening this setup screen.").font(.footnote).foregroundStyle(.secondary)
+            }
+            Section("If nothing happens") {
+                Text("Run the shortcut once in Shortcuts and complete any prompts. Check the Back Tap assignment and try again. If Glean opens but analysis fails, capture worked; check the analysis diagnostic separately.")
+            }
+        }.scrollContentBackground(.hidden).background(AppBackdrop())
+            .navigationTitle("Back Tap Capture").navigationBarTitleDisplayMode(.inline)
+            .alert("Could not open Shortcuts", isPresented: $launchError) {
+                Button("OK", role: .cancel) {}
+            } message: { Text("Open Apple's Shortcuts app from your Home Screen. Install it from the App Store if it is missing.") }
     }
 }

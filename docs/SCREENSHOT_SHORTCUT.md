@@ -45,3 +45,9 @@ If nothing happens, run the shortcut once directly in Shortcuts and complete the
 If **Analyze Screenshot in Glean** is missing, install the latest build, open Glean once, reopen Shortcuts and search again. Double-clicking the power button is not the trigger configured by this guide.
 
 [← Everyday use](USING_GLEAN.md) · [Troubleshooting](TROUBLESHOOTING.md)
+
+## Guided setup in Glean
+
+Open **Glean → Settings → Enable Back Tap Capture** for the three-step setup guide. The app never claims it has enabled Back Tap: iOS does not expose assignment status to Glean.
+
+The ready-made installer requires a published, tested iCloud shortcut URL. Until supplied, the guide shows manual creation instructions and Open Shortcuts. To enable Add Shortcut in a distribution build, set `GleanScreenshotShortcutURL` in the app Info.plist to the actual `https://www.icloud.com/shortcuts/<identifier>` link. Verify the shortcut contains Take Screenshot followed by Analyze Screenshot in Glean, with the first action's output connected to the Screenshot parameter, before publishing the link. Never substitute an invented link.

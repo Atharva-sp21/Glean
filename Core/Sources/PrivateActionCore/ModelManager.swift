@@ -62,14 +62,14 @@ public actor ModelManager {
                 var output = try await runner.generate(input, attempt: attempt)
                 try Task.checkCancellation()
                 do {
-                    let proposal = try OutputValidator.decode(ModelOutputEnvelope.normalize(output.json))
+                    let proposal = try SourceGrounding.validate(OutputValidator.decode(ModelOutputEnvelope.normalize(output.json)), input: input)
                     output.metrics.loadSeconds = attempt == 0 ? loadTime : 0; output.metrics.success = true
                     await onMetrics(output.metrics)
                     return AnalysisResult(proposal: proposal, metrics: output.metrics)
                 } catch {
                     output.metrics.loadSeconds = attempt == 0 ? loadTime : 0
                     output.metrics.success = false
-                    output.metrics.failureCode = OutputDiagnostics.classify(output.json, outputTokens: output.metrics.outputTokens)
+                    output.metrics.failureCode = (error as? PrivateActionError) == .ungroundedOutput ? "source_grounding" : OutputDiagnostics.classify(output.json, outputTokens: output.metrics.outputTokens)
                     await onMetrics(output.metrics)
                     if attempt == 1 { throw error }
                 }

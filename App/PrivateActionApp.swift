@@ -12,6 +12,7 @@ import PrivateActionCore
                     if phase == .active { Task { await environment.refresh() } }
                     else if phase == .background { environment.resourcePressure() }
                 }
+                .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in environment.resourcePressure() }
                 .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in environment.resourcePressure() }
                 .onReceive(NotificationCenter.default.publisher(for: ProcessInfo.thermalStateDidChangeNotification)) { _ in
                     if ProcessInfo.processInfo.thermalState == .serious || ProcessInfo.processInfo.thermalState == .critical { environment.resourcePressure() }
