@@ -25,6 +25,13 @@ public enum ProposedActionType: String, Codable, CaseIterable, Sendable {
 public struct ExtractedDate: Codable, Sendable, Equatable {
     public let rawText: String
     public let iso8601: String?
+    private enum CodingKeys: String, CodingKey { case rawText, iso8601 }
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(rawText, forKey: .rawText)
+        if let iso8601 { try container.encode(iso8601, forKey: .iso8601) }
+        else { try container.encodeNil(forKey: .iso8601) }
+    }
 }
 public struct ChecklistItem: Codable, Identifiable, Sendable, Equatable {
     public var id: String { text }
